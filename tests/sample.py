@@ -8,3 +8,11 @@ def greet(name):
 
 def is_even(n):
     return n % 2 == 0
+
+
+class Calculator:
+    def multiply(self, a, b):
+        return a * b
+
+    def divide(self, a, b):
+        return a / b
