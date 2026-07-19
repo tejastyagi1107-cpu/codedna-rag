@@ -181,7 +181,7 @@ st.markdown("### 📁 Index a Codebase")
 
 folder_path = st.text_input(
     label="Codebase folder path",
-    value="tests/sample_codebases/flask/src/flask",
+    value="core",
     help="Absolute or relative path to the Python project you want to index.",
 )
 
