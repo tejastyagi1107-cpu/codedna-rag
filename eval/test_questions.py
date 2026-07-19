@@ -21,8 +21,8 @@ questions = [
 # Step 4: Loop through each question and run the full RAG pipeline
 for question in questions:
 
-    # Retrieve the top 3 most relevant code chunks from ChromaDB
-    chunks = query_chunks(question)
+    # Retrieve the top 5 most relevant code chunks from ChromaDB
+    chunks = query_chunks(question, n_results=5)
 
     # Generate a grounded answer using the LLM
     answer = generate_answer(question, chunks)
@@ -31,10 +31,10 @@ for question in questions:
     print(f"QUESTION: {question}")
     print()
 
-    # Print just the names of the 3 retrieved chunks (not the full code)
+    # Print just the names of the 5 retrieved chunks (not the full code)
     print("Retrieved chunks:")
     for chunk in chunks:
-        print(f"  - {chunk['metadata']['name']}")
+        print(f"  - {chunk['metadata']['name']} (from {chunk['metadata']['filename']})")
     print()
 
     # Print the LLM's answer

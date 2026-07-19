@@ -68,7 +68,7 @@ def store_chunks(chunks: list[dict]) -> None:
         )
 
 
-def query_chunks(question: str, n_results: int = 3) -> list[dict]:
+def query_chunks(question: str, n_results: int = 5) -> list[dict]:
     """
     Searches ChromaDB for the code chunks most semantically similar to the question.
 

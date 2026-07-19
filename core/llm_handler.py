@@ -1,11 +1,18 @@
 # llm_handler.py
-# Takes a question + relevant code chunks and uses a local LLM (via Ollama) to generate an answer
+# Takes a question + relevant code chunks and uses an LLM to generate an answer.
+# Automatically uses Groq (cloud) if GROQ_API_KEY is set, otherwise falls back to Ollama (local).
 
-# Step 1: Import ollama — the Python client for locally-running LLMs
+# Step 1: Standard library imports
+import os
+
+# Step 2: Import ollama — the Python client for locally-running LLMs
 import ollama
 
+# Step 3: Import Groq — fast cloud inference via the Groq API
+from groq import Groq
 
-# Step 2: Define the generate_answer function
+
+# Step 4: Define the generate_answer function
 def generate_answer(question: str, chunks: list[dict]) -> str:
     """
     Generates a natural language answer to a question using relevant code chunks as context.
@@ -19,9 +26,13 @@ def generate_answer(question: str, chunks: list[dict]) -> str:
 
     Returns:
         A string containing the LLM's answer
+
+    Backend selection:
+        - If the GROQ_API_KEY environment variable is set → use Groq API (llama-3.3-70b-versatile)
+        - Otherwise → fall back to local Ollama (llama3)
     """
 
-    # Step 3a: Build a single "context" string from all the chunks
+    # Step 5a: Build a single "context" string from all the chunks
     # Each chunk gets a header showing which function/class it is and where it lives,
     # followed by its source code, then a "---" divider
     context_parts = []
@@ -36,7 +47,7 @@ def generate_answer(question: str, chunks: list[dict]) -> str:
     # Join all the formatted chunks into one big context string
     context = "\n".join(context_parts)
 
-    # Step 3b: Build the full prompt
+    # Step 5b: Build the full prompt
     # We instruct the LLM to ONLY use the provided code — no hallucinating
     prompt = f"""You are a helpful assistant answering questions about a codebase. \
 Use ONLY the following code to answer the question. If the code doesn't contain \
@@ -49,18 +60,35 @@ Question: {question}
 
 Answer:"""
 
-    # Step 3c: Call Ollama with the llama3 model
-    # messages is a list of dicts — like a chat history. We only send one user message.
-    response = ollama.chat(
-        model="llama3",
-        messages=[{"role": "user", "content": prompt}]
-    )
+    # Step 5c: Choose backend based on whether GROQ_API_KEY is set
+    groq_api_key = os.environ.get("GROQ_API_KEY")
 
-    # Step 3d: Extract and return just the text of the reply
-    return response['message']['content']
+    if groq_api_key:
+        # ── Groq path (cloud) ───────────────────────────────────────────────
+        # Fast inference via Groq API; model: llama-3.3-70b-versatile
+        client = Groq(api_key=groq_api_key)
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        # Extract the text reply from the Groq response object
+        return response.choices[0].message.content
+
+    else:
+        # ── Ollama path (local fallback) ────────────────────────────────────
+        # Requires Ollama running locally with the llama3 model pulled
+        response = ollama.chat(
+            model="llama3",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        # Extract and return just the text of the reply
+        return response['message']['content']
 
 
-# Step 4: Test block — only runs when you execute this file directly
+# Step 6: Test block — only runs when you execute this file directly
 if __name__ == "__main__":
     from core.vector_store import query_chunks
 
@@ -74,3 +102,4 @@ if __name__ == "__main__":
 
     print("Question:", question)
     print("\nAnswer:", answer)
+
